@@ -35,9 +35,9 @@ export const qk = {
 
 const STALE = 30_000;
 
-function nullableId(v: string | null | undefined): number | null {
+function nullableId(v: string | null | undefined): string | null {
   if (v === null || v === undefined || v === "") return null;
-  return Number(v);
+  return v;
 }
 
 /* --------------------------------------------------------------- projects */
@@ -144,7 +144,7 @@ export function useCreateObjective() {
   return useMutation({
     mutationFn: ({ componentId, text }: { componentId: string; text: string }) =>
       api.post<ProjectObjective>("/strategic-objectives/", {
-        componentId: Number(componentId),
+        componentId,
         text,
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.objectives }),
@@ -164,7 +164,7 @@ export function useUpdateObjective() {
       text: string;
     }) =>
       api.put<ProjectObjective>(`/strategic-objectives/${id}/`, {
-        componentId: Number(componentId),
+        componentId,
         text,
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.objectives }),
@@ -203,7 +203,7 @@ export function useCreateStrategy() {
       text: string;
     }) =>
       api.post<ProjectStrategy>("/strategies/", {
-        objectiveId: Number(objectiveId),
+        objectiveId,
         text,
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.strategies }),
@@ -224,7 +224,7 @@ export function useUpdateStrategy() {
       text: string;
     }) =>
       api.put<ProjectStrategy>(`/strategies/${id}/`, {
-        objectiveId: Number(objectiveId),
+        objectiveId,
         text,
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.strategies }),
@@ -253,7 +253,7 @@ export function useCreateKeyActivity() {
   return useMutation({
     mutationFn: ({ strategyId, text }: { strategyId: string; text: string }) =>
       api.post<KeyActivity>("/key-activities/", {
-        strategyId: Number(strategyId),
+        strategyId,
         text,
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.keyActivities }),
@@ -273,7 +273,7 @@ export function useUpdateKeyActivity() {
       text: string;
     }) =>
       api.put<KeyActivity>(`/key-activities/${id}/`, {
-        strategyId: Number(strategyId),
+        strategyId,
         text,
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.keyActivities }),
@@ -310,7 +310,7 @@ export function useCreateExpectedOutput() {
       text: string;
     }) =>
       api.post<ExpectedOutput>("/expected-outputs/", {
-        strategyId: Number(strategyId),
+        strategyId,
         keyActivityId: nullableId(keyActivityId),
         text,
       }),
@@ -333,7 +333,7 @@ export function useUpdateExpectedOutput() {
       text: string;
     }) =>
       api.put<ExpectedOutput>(`/expected-outputs/${id}/`, {
-        strategyId: Number(strategyId),
+        strategyId,
         keyActivityId: nullableId(keyActivityId),
         text,
       }),
@@ -375,7 +375,7 @@ export function useCreateOutputIndicator() {
       api.post<OutputIndicator>("/output-indicators/", {
         strategyId: nullableId(strategyId),
         keyActivityId: nullableId(keyActivityId),
-        expectedOutputId: Number(expectedOutputId),
+        expectedOutputId,
         text,
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.outputIndicators }),
@@ -401,7 +401,7 @@ export function useUpdateOutputIndicator() {
       api.put<OutputIndicator>(`/output-indicators/${id}/`, {
         strategyId: nullableId(strategyId),
         keyActivityId: nullableId(keyActivityId),
-        expectedOutputId: Number(expectedOutputId),
+        expectedOutputId,
         text,
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.outputIndicators }),
@@ -438,10 +438,7 @@ export function useCreateBaseline() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: BaselineInput) =>
-      api.post<Baseline>("/baselines/", {
-        ...input,
-        outputIndicatorId: Number(input.outputIndicatorId),
-      }),
+      api.post<Baseline>("/baselines/", { ...input }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.baselines }),
   });
 }
@@ -450,10 +447,7 @@ export function useUpdateBaseline() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...input }: BaselineInput & { id: string }) =>
-      api.put<Baseline>(`/baselines/${id}/`, {
-        ...input,
-        outputIndicatorId: Number(input.outputIndicatorId),
-      }),
+      api.put<Baseline>(`/baselines/${id}/`, { ...input }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.baselines }),
   });
 }
@@ -514,7 +508,7 @@ export function useDeleteDocument() {
 export function useAllMappings() {
   return useQuery({
     queryKey: ["mappings", "all"],
-    queryFn: () => api.get<(ProjectMapping & { project: number })[]>("/project-mappings/"),
+    queryFn: () => api.get<(ProjectMapping & { project: string })[]>("/project-mappings/"),
     staleTime: STALE,
   });
 }
@@ -548,13 +542,13 @@ export function useSaveMapping() {
   return useMutation({
     mutationFn: (input: MappingInput) =>
       api.post<ProjectMapping>("/project-mappings/", {
-        project: Number(input.projectId),
-        kraIds: input.kraIds.map(Number),
-        objectiveIds: input.objectiveIds.map(Number),
-        strategyIds: input.strategyIds.map(Number),
-        keyActivityIds: input.keyActivityIds.map(Number),
-        expectedOutputIds: input.expectedOutputIds.map(Number),
-        outputIndicatorIds: input.outputIndicatorIds.map(Number),
+        project: input.projectId,
+        kraIds: input.kraIds,
+        objectiveIds: input.objectiveIds,
+        strategyIds: input.strategyIds,
+        keyActivityIds: input.keyActivityIds,
+        expectedOutputIds: input.expectedOutputIds,
+        outputIndicatorIds: input.outputIndicatorIds,
       }),
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: qk.mapping(vars.projectId) });
@@ -606,8 +600,8 @@ export function useSaveTracking() {
       entries: TrackingEntryInput[];
     }) =>
       api.post<TrackingRow[]>("/indicator-tracking/bulk-save/", {
-        project: Number(projectId),
-        outputIndicatorId: Number(outputIndicatorId),
+        project: projectId,
+        outputIndicatorId,
         entries,
       }),
     onSuccess: (_d, vars) =>
