@@ -12,7 +12,9 @@ import type {
   TrackingEntry,
   ProjectTrackingRecord,
 } from "./types";
-import { projects as seedProjects } from "./mockData";
+import { projects as seedProjects, PROJECTS_SEED_VERSION } from "./mockData";
+
+const SEED_VERSION_KEY = "kalro_pm_seed_version";
 
 const KEYS = {
   projects: "kalro_pm_projects",
@@ -385,6 +387,12 @@ export interface StoredProject extends Project {
 
 export const projectsStore = {
   _all(): StoredProject[] {
+    const currentVersion = localStorage.getItem(SEED_VERSION_KEY);
+    if (currentVersion !== PROJECTS_SEED_VERSION) {
+      save(KEYS.projects, seedProjects);
+      localStorage.setItem(SEED_VERSION_KEY, PROJECTS_SEED_VERSION);
+      return seedProjects as StoredProject[];
+    }
     const stored = load<StoredProject>(KEYS.projects);
     if (stored.length === 0) {
       save(KEYS.projects, seedProjects);
