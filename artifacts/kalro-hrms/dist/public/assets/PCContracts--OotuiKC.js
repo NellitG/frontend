@@ -1,0 +1,1 @@
+import{j as t}from"./index-BlssDkX7.js";import{P as r}from"./PagePlaceholder-CLQJ5DK8.js";import"./card-BLWBqC0J.js";function a(){return t.jsx(r,{title:"Contracts",description:"All performance contracts across departments."})}export{a as default};

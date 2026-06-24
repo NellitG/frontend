@@ -1,0 +1,1 @@
+import{j as i}from"./index-BlssDkX7.js";import{P as r}from"./PagePlaceholder-CLQJ5DK8.js";import"./card-BLWBqC0J.js";function o(){return i.jsx(r,{title:"Matrix — Presidential Priorities",description:"Presidential priority matrix indicators."})}export{o as default};

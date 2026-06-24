@@ -1,0 +1,1 @@
+import{j as r}from"./index-BlssDkX7.js";import{P as o}from"./PagePlaceholder-CLQJ5DK8.js";import"./card-BLWBqC0J.js";function s(){return r.jsx(o,{title:"Monitoring — Previous Reports",description:"Previous monitoring report archive."})}export{s as default};

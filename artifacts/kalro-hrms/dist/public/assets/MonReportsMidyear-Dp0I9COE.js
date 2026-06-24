@@ -1,0 +1,1 @@
+import{j as r}from"./index-BlssDkX7.js";import{P as o}from"./PagePlaceholder-CLQJ5DK8.js";import"./card-BLWBqC0J.js";function a(){return r.jsx(o,{title:"Monitoring — Mid-Year Report",description:"Mid-year monitoring and evaluation report."})}export{a as default};

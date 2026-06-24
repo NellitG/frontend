@@ -1,0 +1,1 @@
+import{j as t}from"./index-BlssDkX7.js";import{P as r}from"./PagePlaceholder-CLQJ5DK8.js";import"./card-BLWBqC0J.js";function s(){return t.jsx(r,{title:"Projects Matrix",description:"Projects linked to this performance contract."})}export{s as default};
