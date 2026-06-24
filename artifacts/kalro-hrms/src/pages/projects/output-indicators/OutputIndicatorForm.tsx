@@ -134,8 +134,8 @@ export default function OutputIndicatorForm({ mode = "create" }: OutputIndicator
             <div className="space-y-1.5">
               <Label>Key Activity <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
               <Select
-                value={keyActivityId}
-                onValueChange={setKeyActivityId}
+                value={keyActivityId || "__none__"}
+                onValueChange={(v) => setKeyActivityId(v === "__none__" ? "" : v)}
                 disabled={!strategyId || keyActivities.length === 0}
               >
                 <SelectTrigger>
@@ -150,7 +150,7 @@ export default function OutputIndicatorForm({ mode = "create" }: OutputIndicator
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— None —</SelectItem>
+                  <SelectItem value="__none__">— None —</SelectItem>
                   {keyActivities.map((a) => <SelectItem key={a.id} value={a.id}>{a.text}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -165,8 +165,8 @@ export default function OutputIndicatorForm({ mode = "create" }: OutputIndicator
             <div className="space-y-1.5">
               <Label>Expected Output <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
               <Select
-                value={expectedOutputId}
-                onValueChange={setExpectedOutputId}
+                value={expectedOutputId || "__none__"}
+                onValueChange={(v) => setExpectedOutputId(v === "__none__" ? "" : v)}
                 disabled={!strategyId || expectedOutputs.length === 0}
               >
                 <SelectTrigger>
@@ -181,7 +181,7 @@ export default function OutputIndicatorForm({ mode = "create" }: OutputIndicator
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— None —</SelectItem>
+                  <SelectItem value="__none__">— None —</SelectItem>
                   {expectedOutputs.map((o) => <SelectItem key={o.id} value={o.id}>{o.text}</SelectItem>)}
                 </SelectContent>
               </Select>

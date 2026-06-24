@@ -132,8 +132,8 @@ export default function ExpectedOutputForm({ mode = "create" }: ExpectedOutputFo
             <div className="space-y-1.5">
               <Label>Key Activity <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
               <Select
-                value={keyActivityId}
-                onValueChange={setKeyActivityId}
+                value={keyActivityId || "__none__"}
+                onValueChange={(v) => setKeyActivityId(v === "__none__" ? "" : v)}
                 disabled={!strategyId || keyActivities.length === 0}
               >
                 <SelectTrigger>
@@ -148,7 +148,7 @@ export default function ExpectedOutputForm({ mode = "create" }: ExpectedOutputFo
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— None —</SelectItem>
+                  <SelectItem value="__none__">— None —</SelectItem>
                   {keyActivities.map((a) => <SelectItem key={a.id} value={a.id}>{a.text}</SelectItem>)}
                 </SelectContent>
               </Select>
