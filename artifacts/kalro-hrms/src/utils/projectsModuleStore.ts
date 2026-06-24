@@ -1,4 +1,5 @@
 import type {
+  Project,
   KRAComponent,
   ProjectObjective,
   ProjectStrategy,
@@ -11,8 +12,10 @@ import type {
   TrackingEntry,
   ProjectTrackingRecord,
 } from "./types";
+import { projects as seedProjects } from "./mockData";
 
 const KEYS = {
+  projects: "kalro_pm_projects",
   components: "kalro_pm_components",
   objectives: "kalro_pm_objectives",
   strategies: "kalro_pm_strategies",
@@ -24,6 +27,7 @@ const KEYS = {
   deletedProjects: "kalro_pm_deleted_projects",
   baselines: "kalro_pm_baselines",
   projectTracking: "kalro_pm_project_tracking",
+  trackingRows: "kalro_pm_tracking_rows",
 } as const;
 
 function load<T>(key: string, fallback: T): T;
@@ -370,5 +374,107 @@ export const trackingEvidenceStore = {
     } catch {
       // ignore
     }
+  },
+};
+
+/* ----------------------------------------------------------------- projects */
+
+export interface StoredProject extends Project {
+  description?: string;
+}
+
+export const projectsStore = {
+  _all(): StoredProject[] {
+    const stored = load<StoredProject>(KEYS.projects);
+    if (stored.length === 0) {
+      save(KEYS.projects, seedProjects);
+      return seedProjects as StoredProject[];
+    }
+    return stored;
+  },
+  getAll(): StoredProject[] {
+    const deleted = new Set(load<string>(KEYS.deletedProjects));
+    return this._all().filter((p) => !deleted.has(p.id));
+  },
+  getById(id: string): StoredProject | null {
+    return this._all().find((p) => p.id === id) ?? null;
+  },
+  create(data: Omit<StoredProject, "id">): StoredProject {
+    const all = this._all();
+    const project: StoredProject = { id: uid(), ...data };
+    save(KEYS.projects, [...all, project]);
+    return project;
+  },
+  update(id: string, data: Partial<Omit<StoredProject, "id">>): StoredProject | null {
+    const all = this._all();
+    let updated: StoredProject | null = null;
+    const next = all.map((p) => {
+      if (p.id !== id) return p;
+      updated = { ...p, ...data };
+      return updated;
+    });
+    save(KEYS.projects, next);
+    return updated;
+  },
+  softDelete(id: string): void {
+    const ids = load<string>(KEYS.deletedProjects);
+    if (!ids.includes(id)) save(KEYS.deletedProjects, [...ids, id]);
+  },
+};
+
+/* ------------------------------------------------------------- tracking rows */
+
+export interface TrackingRow {
+  id: string;
+  project: string;
+  outputIndicatorId: string;
+  year: number;
+  baselineReference: number | null;
+  target: number | null;
+  achievement: string;
+  evidenceName: string;
+  evidenceUrl: string | null;
+}
+
+export const trackingRowsStore = {
+  getAll(): TrackingRow[] {
+    return load<TrackingRow>(KEYS.trackingRows);
+  },
+  getForProject(projectId: string): TrackingRow[] {
+    return this.getAll().filter((r) => r.project === projectId);
+  },
+  getById(id: string): TrackingRow | null {
+    return this.getAll().find((r) => r.id === id) ?? null;
+  },
+  bulkSave(projectId: string, outputIndicatorId: string, entries: { year: number; target: number | null; achievement: string; evidenceName: string }[]): TrackingRow[] {
+    const all = this.getAll();
+    const kept = all.filter((r) => !(r.project === projectId && r.outputIndicatorId === outputIndicatorId));
+    const newRows: TrackingRow[] = entries.map((e) => {
+      const existing = all.find((r) => r.project === projectId && r.outputIndicatorId === outputIndicatorId && r.year === e.year);
+      return {
+        id: existing?.id ?? uid(),
+        project: projectId,
+        outputIndicatorId,
+        year: e.year,
+        baselineReference: null,
+        target: e.target,
+        achievement: e.achievement,
+        evidenceName: e.evidenceName,
+        evidenceUrl: existing?.evidenceUrl ?? null,
+      };
+    });
+    save(KEYS.trackingRows, [...kept, ...newRows]);
+    return newRows;
+  },
+  updateEvidence(id: string, evidenceUrl: string): TrackingRow | null {
+    const all = this.getAll();
+    let updated: TrackingRow | null = null;
+    const next = all.map((r) => {
+      if (r.id !== id) return r;
+      updated = { ...r, evidenceUrl };
+      return updated;
+    });
+    save(KEYS.trackingRows, next);
+    return updated;
   },
 };
