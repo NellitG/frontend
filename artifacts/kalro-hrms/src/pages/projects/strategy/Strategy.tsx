@@ -40,17 +40,20 @@ export default function Strategy() {
     const byObjective: Record<string, StrategyGroup> = {};
     strategies.forEach((s) => {
       const key = s.objectiveId;
+      // Recover componentId from the objective when the strategy's own field is blank
+      const resolvedComponentId =
+        s.componentId || objectiveMap[s.objectiveId]?.componentId || "";
       if (!byObjective[key]) {
         byObjective[key] = {
           objectiveId: s.objectiveId,
-          componentId: s.componentId,
+          componentId: resolvedComponentId,
           strategies: [],
         };
       }
       byObjective[key].strategies.push(s);
     });
     return Object.values(byObjective);
-  }, [strategies]);
+  }, [strategies, objectiveMap]);
 
   const filteredGroups = useMemo<StrategyGroup[]>(() => {
     if (!q) return groups;

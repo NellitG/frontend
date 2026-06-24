@@ -195,14 +195,16 @@ export function useCreateStrategy() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({
+      componentId,
       objectiveId,
       text,
     }: {
-      componentId?: string;
+      componentId: string;
       objectiveId: string;
       text: string;
     }) =>
       api.post<ProjectStrategy>("/strategies/", {
+        componentId,
         objectiveId,
         text,
       }),
@@ -215,15 +217,17 @@ export function useUpdateStrategy() {
   return useMutation({
     mutationFn: ({
       id,
+      componentId,
       objectiveId,
       text,
     }: {
       id: string;
-      componentId?: string;
+      componentId: string;
       objectiveId: string;
       text: string;
     }) =>
       api.put<ProjectStrategy>(`/strategies/${id}/`, {
+        componentId,
         objectiveId,
         text,
       }),
