@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "KALRO HRMS"
+version = "1.0.0"
+id = "artifacts/kalro-hrms"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21146
+
+[services.development]
+run = "pnpm --filter @workspace/kalro-hrms run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/kalro-hrms", "run", "build" ]
+publicDir = "artifacts/kalro-hrms/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21146"
+BASE_PATH = "/"
