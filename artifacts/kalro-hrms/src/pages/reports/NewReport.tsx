@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,16 +8,27 @@ import { ChevronRight, Plus, Trash2, Upload, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import * as reportsStore from "@/utils/reportsStore";
+import type { ActivityRow, ReportFormData } from "@/utils/reportsStore";
 
-interface FieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface FieldProps {
   label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
 }
 
-function Field({ label, ...props }: FieldProps) {
+function Field({ label, value, onChange, placeholder, type = "text" }: FieldProps) {
   return (
     <div className="space-y-1.5">
       <Label className="text-xs font-medium">{label}</Label>
-      <Input {...props} />
+      <Input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
     </div>
   );
 }
@@ -44,14 +55,47 @@ function Section({ index, title, children }: SectionProps) {
   );
 }
 
-interface ActivityRow {
-  id: string;
-  output: string;
-  activity: string;
-  achievement: string;
-}
+const EMPTY_FORM: Omit<ReportFormData, "activities" | "fundsAllocated" | "fundsReceived" | "fundsUtilized"> = {
+  quarter: "",
+  financialYear: "",
+  sourceOfFund: "",
+  donor: "",
+  project: "",
+  subComponent: "",
+  valueChain: "",
+  projectTitle: "",
+  keyResultArea: "",
+  strategicObjective: "",
+  strategies: "",
+  startDate: "",
+  endDate: "",
+  duration: "",
+  leadInstitute: "",
+  principalInvestigator: "",
+  coPrincipalInvestigator: "",
+  address: "",
+  email: "",
+  telephone: "",
+  countiesTargeted: "",
+  subCounty: "",
+  ward: "",
+  numberOfBeneficiaries: "",
+  women: "",
+  youths: "",
+  vmgs: "",
+  pwds: "",
+  expectedOutcomes: "",
+  achievements: "",
+  sustainabilityMeasures: "",
+  challenges: "",
+  lessonsLearned: "",
+  recommendations: "",
+  wayForward: "",
+};
 
 export default function NewReport() {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ ...EMPTY_FORM });
   const [activities, setActivities] = useState<ActivityRow[]>([
     { id: crypto.randomUUID(), output: "", activity: "", achievement: "" },
   ]);
@@ -61,18 +105,32 @@ export default function NewReport() {
   const [files, setFiles] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
 
+  const set = (k: keyof typeof EMPTY_FORM, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
   const absorbed = useMemo(
     () => (received > 0 ? ((utilized / received) * 100).toFixed(1) : "0.0"),
     [received, utilized],
   );
+
+  const buildFormData = (): ReportFormData => ({
+    ...form,
+    activities,
+    fundsAllocated: allocated,
+    fundsReceived: received,
+    fundsUtilized: utilized,
+  });
 
   const addActivity = () =>
     setActivities((a) => [
       ...a,
       { id: crypto.randomUUID(), output: "", activity: "", achievement: "" },
     ]);
+
   const removeActivity = (id: string) =>
     setActivities((a) => (a.length > 1 ? a.filter((x) => x.id !== id) : a));
+
+  const updateActivity = (id: string, key: keyof ActivityRow, value: string) =>
+    setActivities((a) => a.map((row) => (row.id === id ? { ...row, [key]: value } : row)));
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -80,9 +138,18 @@ export default function NewReport() {
     setFiles((f) => [...f, ...Array.from(e.dataTransfer.files)]);
   };
 
+  const saveDraft = () => {
+    reportsStore.addTechnicalReport(buildFormData(), true);
+    toast.success("Draft saved — visible in Technical Reports");
+  };
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    const data = buildFormData();
+    reportsStore.addTechnicalReport(data, false);
+    reportsStore.addFinancialReport(data);
     toast.success("Report submitted for review");
+    navigate("/technical-reports");
   };
 
   return (
@@ -114,54 +181,54 @@ export default function NewReport() {
       <form onSubmit={submit} className="space-y-5">
         <Section index={1} title="Project Information">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <Field label="Quarter" placeholder="Q1" />
-            <Field label="Financial Year" placeholder="2025/2026" />
-            <Field label="Source of Fund" placeholder="GoK / Donor" />
-            <Field label="Donor" placeholder="World Bank" />
-            <Field label="Project" placeholder="Project name" />
-            <Field label="Sub-Component" placeholder="Sub-component" />
-            <Field label="Value Chain" placeholder="Dairy" />
-            <Field label="Project Title" placeholder="Full title" />
+            <Field label="Quarter" value={form.quarter} onChange={(v) => set("quarter", v)} placeholder="Q1" />
+            <Field label="Financial Year" value={form.financialYear} onChange={(v) => set("financialYear", v)} placeholder="2025/2026" />
+            <Field label="Source of Fund" value={form.sourceOfFund} onChange={(v) => set("sourceOfFund", v)} placeholder="GoK / Donor" />
+            <Field label="Donor" value={form.donor} onChange={(v) => set("donor", v)} placeholder="World Bank" />
+            <Field label="Project" value={form.project} onChange={(v) => set("project", v)} placeholder="Project name" />
+            <Field label="Sub-Component" value={form.subComponent} onChange={(v) => set("subComponent", v)} placeholder="Sub-component" />
+            <Field label="Value Chain" value={form.valueChain} onChange={(v) => set("valueChain", v)} placeholder="Dairy" />
+            <Field label="Project Title" value={form.projectTitle} onChange={(v) => set("projectTitle", v)} placeholder="Full title" />
           </div>
         </Section>
 
         <Section index={2} title="Strategic Alignment">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <Field label="Key Result Area" />
-            <Field label="Strategic Objective" />
-            <Field label="Strategies" />
+            <Field label="Key Result Area" value={form.keyResultArea} onChange={(v) => set("keyResultArea", v)} />
+            <Field label="Strategic Objective" value={form.strategicObjective} onChange={(v) => set("strategicObjective", v)} />
+            <Field label="Strategies" value={form.strategies} onChange={(v) => set("strategies", v)} />
           </div>
         </Section>
 
         <Section index={3} title="Project Duration">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <Field label="Start Date" type="date" />
-            <Field label="End Date" type="date" />
-            <Field label="Duration" placeholder="e.g. 36 months" />
+            <Field label="Start Date" type="date" value={form.startDate} onChange={(v) => set("startDate", v)} />
+            <Field label="End Date" type="date" value={form.endDate} onChange={(v) => set("endDate", v)} />
+            <Field label="Duration" value={form.duration} onChange={(v) => set("duration", v)} placeholder="e.g. 36 months" />
           </div>
         </Section>
 
         <Section index={4} title="Team Information">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <Field label="Lead Institute / Centre" />
-            <Field label="Principal Investigator" />
-            <Field label="Co-Principal Investigator" />
-            <Field label="Address" />
-            <Field label="Email" type="email" />
-            <Field label="Telephone" type="tel" />
+            <Field label="Lead Institute / Centre" value={form.leadInstitute} onChange={(v) => set("leadInstitute", v)} />
+            <Field label="Principal Investigator" value={form.principalInvestigator} onChange={(v) => set("principalInvestigator", v)} />
+            <Field label="Co-Principal Investigator" value={form.coPrincipalInvestigator} onChange={(v) => set("coPrincipalInvestigator", v)} />
+            <Field label="Address" value={form.address} onChange={(v) => set("address", v)} />
+            <Field label="Email" type="email" value={form.email} onChange={(v) => set("email", v)} />
+            <Field label="Telephone" type="tel" value={form.telephone} onChange={(v) => set("telephone", v)} />
           </div>
         </Section>
 
         <Section index={5} title="Beneficiary Information">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <Field label="Counties Targeted" />
-            <Field label="Sub-county" />
-            <Field label="Ward" />
-            <Field label="Number of Beneficiaries" type="number" />
-            <Field label="Women" type="number" />
-            <Field label="Youths" type="number" />
-            <Field label="VMGs" type="number" />
-            <Field label="PWDs" type="number" />
+            <Field label="Counties Targeted" value={form.countiesTargeted} onChange={(v) => set("countiesTargeted", v)} />
+            <Field label="Sub-county" value={form.subCounty} onChange={(v) => set("subCounty", v)} />
+            <Field label="Ward" value={form.ward} onChange={(v) => set("ward", v)} />
+            <Field label="Number of Beneficiaries" type="number" value={form.numberOfBeneficiaries} onChange={(v) => set("numberOfBeneficiaries", v)} />
+            <Field label="Women" type="number" value={form.women} onChange={(v) => set("women", v)} />
+            <Field label="Youths" type="number" value={form.youths} onChange={(v) => set("youths", v)} />
+            <Field label="VMGs" type="number" value={form.vmgs} onChange={(v) => set("vmgs", v)} />
+            <Field label="PWDs" type="number" value={form.pwds} onChange={(v) => set("pwds", v)} />
           </div>
         </Section>
 
@@ -177,9 +244,18 @@ export default function NewReport() {
                   className="overflow-hidden"
                 >
                   <div className="grid grid-cols-1 gap-3 rounded-lg border bg-muted/20 p-3 md:grid-cols-[1fr_1fr_1fr_auto]">
-                    <Field label={`Output #${idx + 1}`} />
-                    <Field label="Activity" />
-                    <Field label="Achievement" />
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Output #{idx + 1}</Label>
+                      <Input value={a.output} onChange={(e) => updateActivity(a.id, "output", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Activity</Label>
+                      <Input value={a.activity} onChange={(e) => updateActivity(a.id, "activity", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Achievement</Label>
+                      <Input value={a.achievement} onChange={(e) => updateActivity(a.id, "achievement", e.target.value)} />
+                    </div>
                     <div className="flex items-end">
                       <Button
                         type="button"
@@ -205,15 +281,15 @@ export default function NewReport() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Expected outcomes</Label>
-              <Textarea rows={4} />
+              <Textarea rows={4} value={form.expectedOutcomes} onChange={(e) => set("expectedOutcomes", e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Achievements</Label>
-              <Textarea rows={4} />
+              <Textarea rows={4} value={form.achievements} onChange={(e) => set("achievements", e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Sustainability measures</Label>
-              <Textarea rows={4} />
+              <Textarea rows={4} value={form.sustainabilityMeasures} onChange={(e) => set("sustainabilityMeasures", e.target.value)} />
             </div>
           </div>
         </Section>
@@ -241,16 +317,21 @@ export default function NewReport() {
           </div>
         </Section>
 
-        {[
-          { i: 9, t: "Challenges & Corrective Actions" },
-          { i: 10, t: "Lessons Learned" },
-          { i: 11, t: "Recommendations" },
-          { i: 12, t: "Way Forward" },
-        ].map((s) => (
-          <Section key={s.i} index={s.i} title={s.t}>
-            <Textarea rows={4} placeholder={`Describe ${s.t.toLowerCase()}…`} />
-          </Section>
-        ))}
+        <Section index={9} title="Challenges & Corrective Actions">
+          <Textarea rows={4} placeholder="Describe challenges & corrective actions…" value={form.challenges} onChange={(e) => set("challenges", e.target.value)} />
+        </Section>
+
+        <Section index={10} title="Lessons Learned">
+          <Textarea rows={4} placeholder="Describe lessons learned…" value={form.lessonsLearned} onChange={(e) => set("lessonsLearned", e.target.value)} />
+        </Section>
+
+        <Section index={11} title="Recommendations">
+          <Textarea rows={4} placeholder="Describe recommendations…" value={form.recommendations} onChange={(e) => set("recommendations", e.target.value)} />
+        </Section>
+
+        <Section index={12} title="Way Forward">
+          <Textarea rows={4} placeholder="Describe way forward…" value={form.wayForward} onChange={(e) => set("wayForward", e.target.value)} />
+        </Section>
 
         <Section index={13} title="Publications">
           <div
@@ -291,7 +372,7 @@ export default function NewReport() {
         </Section>
 
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline">Save Draft</Button>
+          <Button type="button" variant="outline" onClick={saveDraft}>Save Draft</Button>
           <Button type="submit" className="bg-[var(--brand-navy)] hover:opacity-90">Submit Report</Button>
         </div>
       </form>

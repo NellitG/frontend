@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useSyncExternalStore } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -6,39 +6,26 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronRight, Download, FileText, Plus, Search, SlidersHorizontal } from "lucide-react";
+import * as reportsStore from "@/utils/reportsStore";
 
 const primaryTabs = ["Q1 FY2025/26", "Q2 FY2025/26", "Q3 FY2025/26", "Q4 FY2025/26", "Annual"];
 
 type StatusKey = "Approved" | "Under Review" | "Draft" | "Rejected";
 
-const statusTone: Record<StatusKey, string> = {
+const statusTone: Record<string, string> = {
   Approved: "bg-green-100 text-green-800",
   "Under Review": "bg-amber-100 text-amber-800",
   Draft: "bg-slate-100 text-slate-700",
   Rejected: "bg-red-100 text-red-800",
+  Submitted: "bg-blue-100 text-blue-800",
 };
 
-interface FinancialReport {
-  id: string;
-  project: string;
-  quarter: string;
-  submitted: string;
-  budget: string;
-  utilized: string;
-  rate: string;
-  status: StatusKey;
-}
-
-const reports: FinancialReport[] = [
-  { id: "FR-2025-001", project: "Climate-Smart Agriculture Initiative", quarter: "Q1 FY2025/26", submitted: "Oct 15, 2025", budget: "KES 24.5M", utilized: "KES 18.2M", rate: "74.3%", status: "Approved" },
-  { id: "FR-2025-002", project: "Drought-Tolerant Crops Program", quarter: "Q1 FY2025/26", submitted: "Oct 18, 2025", budget: "KES 18.0M", utilized: "KES 12.6M", rate: "70.0%", status: "Under Review" },
-  { id: "FR-2025-003", project: "Livestock Value Chain Improvement", quarter: "Q2 FY2025/26", submitted: "Jan 12, 2026", budget: "KES 32.1M", utilized: "KES 28.7M", rate: "89.4%", status: "Draft" },
-  { id: "FR-2025-004", project: "Irrigation Systems Enhancement", quarter: "Q2 FY2025/26", submitted: "Jan 14, 2026", budget: "KES 45.8M", utilized: "KES 41.2M", rate: "89.9%", status: "Approved" },
-  { id: "FR-2025-005", project: "Post-Harvest Loss Reduction", quarter: "Q3 FY2025/26", submitted: "Apr 8, 2026", budget: "KES 12.4M", utilized: "KES 9.1M", rate: "73.4%", status: "Rejected" },
-  { id: "FR-2025-006", project: "Market Access Program", quarter: "Q3 FY2025/26", submitted: "Apr 11, 2026", budget: "KES 8.6M", utilized: "KES 7.3M", rate: "84.9%", status: "Under Review" },
-];
-
 export default function FinancialReports() {
+  const reports = useSyncExternalStore(
+    reportsStore.subscribe,
+    reportsStore.getFinancialReports,
+    reportsStore.getFinancialReports,
+  );
   const [tab, setTab] = useState(primaryTabs[0]);
   const [q, setQ] = useState("");
 
@@ -46,7 +33,7 @@ export default function FinancialReports() {
     reports.filter((r) =>
       (tab === "Annual" || r.quarter === tab) &&
       (!q || r.project.toLowerCase().includes(q.toLowerCase()) || r.id.toLowerCase().includes(q.toLowerCase()))
-    ), [tab, q]);
+    ), [tab, q, reports]);
 
   return (
     <>
@@ -134,7 +121,7 @@ export default function FinancialReports() {
                     <td className="py-3">{r.utilized}</td>
                     <td className="py-3 font-semibold text-[var(--brand-green)]">{r.rate}</td>
                     <td className="py-3">
-                      <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", statusTone[r.status])}>
+                      <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", statusTone[r.status] ?? "bg-slate-100 text-slate-700")}>
                         {r.status}
                       </span>
                     </td>

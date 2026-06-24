@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import * as usersStore from "@/utils/usersStore";
+import type { RoleKey } from "@/utils/usersStore";
 
 interface RoleOption {
-  value: string;
+  value: RoleKey;
   label: string;
 }
 
@@ -47,7 +49,7 @@ function Field({ label, error, required, children }: FieldProps) {
 interface FormState {
   name: string;
   email: string;
-  role: string;
+  role: RoleKey;
   department: string;
   password: string;
   confirmPassword: string;
@@ -76,6 +78,15 @@ export default function NewUser() {
       toast.error("Please fix the errors before submitting");
       return;
     }
+
+    usersStore.addUser({
+      name: form.name.trim(),
+      email: form.email.trim(),
+      role: form.role,
+      status: "Active",
+      dept: form.department || "General",
+    });
+
     toast.success("User created successfully");
     navigate("/user-management");
   };

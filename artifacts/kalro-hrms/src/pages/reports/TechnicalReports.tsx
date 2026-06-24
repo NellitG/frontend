@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useSyncExternalStore } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronRight, Download, Edit3, FileText, Plus, Search, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
+import * as reportsStore from "@/utils/reportsStore";
 
 const primaryTabs = ["Q1 FY2025/26", "Q2 FY2025/26", "Q3 FY2025/26", "Q4 FY2025/26", "Annual"];
 const secondaryTabs = ["All Reports", "Draft", "Submitted", "Under Review", "Approved"];
@@ -20,26 +21,12 @@ const statusTone: Record<StatusKey, string> = {
   Submitted: "bg-blue-100 text-blue-800",
 };
 
-interface TechnicalReport {
-  id: string;
-  project: string;
-  quarter: string;
-  submitted: string;
-  category: string;
-  progress: string;
-  status: StatusKey;
-}
-
-const reports: TechnicalReport[] = [
-  { id: "TR-2025-001", project: "Climate-Smart Agriculture Initiative", quarter: "Q1 FY2025/26", submitted: "Oct 15, 2025", category: "Research", progress: "75%", status: "Approved" },
-  { id: "TR-2025-002", project: "Drought-Tolerant Crops Program", quarter: "Q1 FY2025/26", submitted: "Oct 18, 2025", category: "Development", progress: "60%", status: "Under Review" },
-  { id: "TR-2025-003", project: "Livestock Value Chain Improvement", quarter: "Q2 FY2025/26", submitted: "Jan 12, 2026", category: "Innovation", progress: "88%", status: "Draft" },
-  { id: "TR-2025-004", project: "Irrigation Systems Enhancement", quarter: "Q2 FY2025/26", submitted: "Jan 14, 2026", category: "Infrastructure", progress: "92%", status: "Submitted" },
-  { id: "TR-2025-005", project: "Post-Harvest Loss Reduction", quarter: "Q3 FY2025/26", submitted: "Apr 8, 2026", category: "Research", progress: "45%", status: "Approved" },
-  { id: "TR-2025-006", project: "Market Access Program", quarter: "Q3 FY2025/26", submitted: "Apr 11, 2026", category: "Capacity Building", progress: "68%", status: "Under Review" },
-];
-
 export default function TechnicalReports() {
+  const reports = useSyncExternalStore(
+    reportsStore.subscribe,
+    reportsStore.getTechnicalReports,
+    reportsStore.getTechnicalReports,
+  );
   const [tab, setTab] = useState(primaryTabs[0]);
   const [sub, setSub] = useState("All Reports");
   const [q, setQ] = useState("");
@@ -49,7 +36,7 @@ export default function TechnicalReports() {
       (tab === "Annual" || r.quarter === tab) &&
       (sub === "All Reports" || r.status === sub) &&
       (!q || r.project.toLowerCase().includes(q.toLowerCase()) || r.id.toLowerCase().includes(q.toLowerCase()))
-    ), [tab, sub, q]);
+    ), [tab, sub, q, reports]);
 
   return (
     <>
@@ -149,7 +136,7 @@ export default function TechnicalReports() {
                     <td className="py-3 text-muted-foreground">{r.submitted}</td>
                     <td className="py-3 font-semibold text-[var(--brand-green)]">{r.progress}</td>
                     <td className="py-3">
-                      <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", statusTone[r.status])}>
+                      <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", statusTone[r.status as StatusKey] ?? "bg-slate-100 text-slate-700")}>
                         {r.status}
                       </span>
                     </td>
